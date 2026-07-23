@@ -12,12 +12,13 @@ paginación con filtros, migraciones versionadas y documentación **OpenAPI**. T
 
 ## Tabla de contenido
 
+- [Cómo levantar la aplicación](#cómo-levantar-la-aplicación)
 - [Stack tecnológico](#stack-tecnológico)
 - [Arquitectura](#arquitectura)
 - [Estructura del proyecto](#estructura-del-proyecto)
-- [Cómo levantar la aplicación](#cómo-levantar-la-aplicación)
 - [Credenciales demo](#credenciales-demo)
 - [Endpoints](#endpoints)
+- [Ejemplos de peticiones y respuestas](#ejemplos-de-peticiones-y-respuestas)
 - [Autenticación y roles](#autenticación-y-roles)
 - [Reglas de negocio](#reglas-de-negocio)
 - [Manejo de errores](#manejo-de-errores)
@@ -27,6 +28,75 @@ paginación con filtros, migraciones versionadas y documentación **OpenAPI**. T
 - [Decisiones técnicas](#decisiones-técnicas)
 
 ---
+
+## Cómo levantar la aplicación
+
+### Requisitos
+
+- **Docker** y **Docker Compose**.
+- Para desarrollo local, opcionalmente **JDK 21** y **Maven 3.9+**.
+
+### Con Docker
+
+```bash
+cp .env.example .env        # opcional: ajustar credenciales y secreto JWT
+docker compose up --build
+```
+
+El comando levanta dos servicios:
+
+- **postgres** — PostgreSQL 16 con healthcheck y volumen persistente.
+- **app** — la API, que espera a que Postgres esté *healthy* (`depends_on: service_healthy`),
+  aplica las migraciones Flyway (esquema + datos demo) y queda escuchando en el puerto `8080`.
+
+Una vez arriba, la documentación interactiva de la API queda disponible en **Swagger UI**:
+
+### 👉 <http://localhost:8080/swagger-ui.html>
+
+Desde ahí se pueden probar todos los endpoints. Usa el botón **Authorize** para enviar el token
+JWT obtenido en `POST /api/v1/auth/login` (credenciales demo más abajo).
+
+| Recurso | URL |
+|---|---|
+| **Swagger UI** | <http://localhost:8080/swagger-ui.html> |
+| OpenAPI JSON | <http://localhost:8080/v3/api-docs> |
+| Health check | <http://localhost:8080/actuator/health> |
+
+Para detener el stack:
+
+```bash
+docker compose down          # conserva los datos
+docker compose down -v       # elimina también el volumen de PostgreSQL
+```
+
+> **Puerto 5432 ocupado.** Si ya tienes otro PostgreSQL en tu máquina, cambia únicamente el puerto
+> del host: `POSTGRES_PORT=5434 docker compose up --build`. La aplicación se conecta a la base por
+> la red interna de Docker, así que el mapeo externo solo afecta al acceso desde tu equipo.
+
+### Desarrollo local
+
+Levanta solo la base de datos en Docker y ejecuta la aplicación desde Maven:
+
+```bash
+docker compose up -d postgres
+export JWT_SECRET="change-me-in-production-this-is-a-demo-secret-key-min-256-bits-long"
+mvn spring-boot:run
+```
+
+### Variables de entorno
+
+Todas tienen valores por defecto para desarrollo; se documentan en `.env.example`.
+
+| Variable | Por defecto | Descripción |
+|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | `demo` | Perfil activo (`dev` o `demo`) |
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `oriontek` | Credenciales de la base |
+| `POSTGRES_PORT` | `5432` | Puerto de PostgreSQL en el host |
+| `SERVER_PORT` | `8080` | Puerto de la API |
+| `JWT_SECRET` | secreto de demo | Clave de firma HS256 (mínimo 256 bits) |
+| `JWT_ACCESS_EXPIRATION` | `900` | Vigencia del access token, en segundos |
+| `JWT_REFRESH_EXPIRATION` | `604800` | Vigencia del refresh token, en segundos |
+| `CORS_ALLOWED_ORIGINS` | `*` | Orígenes permitidos |
 
 ## Stack tecnológico
 
@@ -162,70 +232,6 @@ src/test/java/com/oriontek/clients
     └── infrastructure/persistence/   CustomerRepositoryIntegrationTest
 ```
 
-## Cómo levantar la aplicación
-
-### Requisitos
-
-- **Docker** y **Docker Compose**.
-- Para desarrollo local, opcionalmente **JDK 21** y **Maven 3.9+**.
-
-### Con Docker
-
-```bash
-cp .env.example .env        # opcional: ajustar credenciales y secreto JWT
-docker compose up --build
-```
-
-El comando levanta dos servicios:
-
-- **postgres** — PostgreSQL 16 con healthcheck y volumen persistente.
-- **app** — la API, que espera a que Postgres esté *healthy* (`depends_on: service_healthy`),
-  aplica las migraciones Flyway (esquema + datos demo) y queda escuchando en el puerto `8080`.
-
-Una vez arriba:
-
-| Recurso | URL |
-|---|---|
-| Swagger UI | <http://localhost:8080/swagger-ui.html> |
-| OpenAPI JSON | <http://localhost:8080/v3/api-docs> |
-| Health | <http://localhost:8080/actuator/health> |
-
-Para detener el stack:
-
-```bash
-docker compose down          # conserva los datos
-docker compose down -v       # elimina también el volumen de PostgreSQL
-```
-
-> **Puerto 5432 ocupado.** Si ya tienes otro PostgreSQL en tu máquina, cambia únicamente el puerto
-> del host: `POSTGRES_PORT=5434 docker compose up --build`. La aplicación se conecta a la base por
-> la red interna de Docker, así que el mapeo externo solo afecta al acceso desde tu equipo.
-
-### Desarrollo local
-
-Levanta solo la base de datos en Docker y ejecuta la aplicación desde Maven:
-
-```bash
-docker compose up -d postgres
-export JWT_SECRET="change-me-in-production-this-is-a-demo-secret-key-min-256-bits-long"
-mvn spring-boot:run
-```
-
-### Variables de entorno
-
-Todas tienen valores por defecto para desarrollo; se documentan en `.env.example`.
-
-| Variable | Por defecto | Descripción |
-|---|---|---|
-| `SPRING_PROFILES_ACTIVE` | `demo` | Perfil activo (`dev` o `demo`) |
-| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `oriontek` | Credenciales de la base |
-| `POSTGRES_PORT` | `5432` | Puerto de PostgreSQL en el host |
-| `SERVER_PORT` | `8080` | Puerto de la API |
-| `JWT_SECRET` | secreto de demo | Clave de firma HS256 (mínimo 256 bits) |
-| `JWT_ACCESS_EXPIRATION` | `900` | Vigencia del access token, en segundos |
-| `JWT_REFRESH_EXPIRATION` | `604800` | Vigencia del refresh token, en segundos |
-| `CORS_ALLOWED_ORIGINS` | `*` | Orígenes permitidos |
-
 ## Credenciales demo
 
 El seed (`V2__seed.sql`) crea dos usuarios y 18 clientes dominicanos con 1–4 direcciones cada uno.
@@ -243,6 +249,10 @@ En Swagger UI usa el botón **Authorize** e introduce el `accessToken` que devue
 > nivel de log a `DEBUG`.
 
 ## Endpoints
+
+> Todos los endpoints se pueden explorar y ejecutar desde **Swagger UI**:
+> **<http://localhost:8080/swagger-ui.html>** (definición OpenAPI en
+> <http://localhost:8080/v3/api-docs>). Usa el botón **Authorize** para enviar el token JWT.
 
 ### Auth — `/api/v1/auth` (públicos)
 
@@ -281,6 +291,217 @@ La respuesta se envuelve en `PageResponse<T>`, que expone `content`, `page`, `si
 | DELETE | `/{addressId}` | ADMIN | Eliminar una dirección, respetando las reglas de negocio |
 
 En [`requests.http`](requests.http) hay una colección lista para ejecutar el flujo completo.
+
+## Ejemplos de peticiones y respuestas
+
+Las respuestas siguientes son salidas reales de la aplicación (los tokens aparecen recortados).
+
+### Autenticación
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "Admin123!" }
+```
+
+**`200 OK`**
+
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
+  "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
+  "tokenType": "Bearer",
+  "expiresIn": 900
+}
+```
+
+### Listado paginado de clientes
+
+```http
+GET /api/v1/customers?page=0&size=2&sort=name,asc
+Authorization: Bearer <access token>
+```
+
+**`200 OK`** — la respuesta va envuelta en `PageResponse<T>` y cada elemento incluye el número de
+direcciones asociadas.
+
+```json
+{
+  "content": [
+    {
+      "id": "a0000000-0000-0000-0000-000000000006",
+      "name": "Ana Cristina Reyes",
+      "email": "ana.reyes@example.com",
+      "phone": "829-555-0106",
+      "identificationNumber": "00667890123",
+      "status": "ACTIVE",
+      "addressCount": 1,
+      "createdAt": "2026-07-23T20:14:21.188920Z",
+      "updatedAt": "2026-07-23T20:14:21.188920Z"
+    },
+    {
+      "id": "a0000000-0000-0000-0000-000000000007",
+      "name": "Carlos Alberto Peña",
+      "email": "carlos.pena@example.com",
+      "phone": "849-555-0107",
+      "identificationNumber": "00778901234",
+      "status": "ACTIVE",
+      "addressCount": 2,
+      "createdAt": "2026-07-23T20:14:21.188920Z",
+      "updatedAt": "2026-07-23T20:14:21.188920Z"
+    }
+  ],
+  "page": 0,
+  "size": 2,
+  "totalElements": 32,
+  "totalPages": 16,
+  "first": true,
+  "last": false
+}
+```
+
+### Detalle de un cliente
+
+```http
+GET /api/v1/customers/{id}
+Authorization: Bearer <access token>
+```
+
+**`200 OK`** — incluye todas sus direcciones, con una sola marcada como primaria.
+
+```json
+{
+  "id": "a0000000-0000-0000-0000-000000000003",
+  "name": "Pedro Antonio Martínez",
+  "email": "pedro.martinez@example.com",
+  "phone": "849-555-0103",
+  "identificationNumber": "00334567890",
+  "status": "ACTIVE",
+  "addresses": [
+    {
+      "id": "ca552aa7-9e5e-4a11-998a-d029a1845f57",
+      "street": "Av. Luperón 88",
+      "city": "Santo Domingo",
+      "state": "Distrito Nacional",
+      "country": "República Dominicana",
+      "postalCode": "10514",
+      "type": "HOME",
+      "primary": true
+    },
+    {
+      "id": "71dbbba0-29fe-49f0-a159-fcaf32e48749",
+      "street": "Calle Restauración 12",
+      "city": "La Romana",
+      "state": "La Romana",
+      "country": "República Dominicana",
+      "postalCode": "22000",
+      "type": "BILLING",
+      "primary": false
+    },
+    {
+      "id": "7d139335-de43-45d9-816f-a2e06815c5e5",
+      "street": "Calle Sánchez 7",
+      "city": "La Romana",
+      "state": "La Romana",
+      "country": "República Dominicana",
+      "postalCode": "22000",
+      "type": "OTHER",
+      "primary": false
+    }
+  ],
+  "createdAt": "2026-07-23T20:14:21.188920Z",
+  "updatedAt": "2026-07-23T20:14:21.188920Z"
+}
+```
+
+### Crear un cliente con sus direcciones
+
+```http
+POST /api/v1/customers
+Authorization: Bearer <access token>
+Content-Type: application/json
+
+{
+  "name": "Cliente de Ejemplo",
+  "email": "cliente.ejemplo@correo.com",
+  "phone": "809-555-9999",
+  "identificationNumber": "40200123459",
+  "addresses": [
+    {
+      "street": "Av. Principal 100",
+      "city": "Santo Domingo",
+      "state": "Distrito Nacional",
+      "postalCode": "10101",
+      "type": "HOME",
+      "primary": true
+    }
+  ]
+}
+```
+
+**`201 Created`** con la cabecera `Location: /api/v1/customers/{id}`. Siguiendo CQRS, el comando
+devuelve únicamente el identificador del recurso creado:
+
+```json
+{
+  "id": "b5139974-eb24-4365-b26f-9a732b6c361d"
+}
+```
+
+### Agregar una dirección
+
+```http
+POST /api/v1/customers/{customerId}/addresses
+Authorization: Bearer <access token>
+Content-Type: application/json
+
+{
+  "street": "Calle Secundaria 5",
+  "city": "Santiago",
+  "state": "Santiago",
+  "postalCode": "51000",
+  "type": "WORK",
+  "primary": false
+}
+```
+
+**`201 Created`**
+
+```json
+{
+  "id": "8539c038-8237-4d5a-8a69-b006bade026f"
+}
+```
+
+Si se omite `country`, se aplica por defecto `"República Dominicana"`.
+
+### Actualizar y eliminar
+
+`PUT /api/v1/customers/{id}`, `PUT` y `DELETE` sobre direcciones y la baja lógica del cliente
+responden **`204 No Content`** sin cuerpo.
+
+### Respuesta ante una regla de negocio
+
+Al intentar eliminar la dirección primaria de un cliente sin haber designado otra:
+
+```http
+DELETE /api/v1/customers/{customerId}/addresses/{addressId}
+Authorization: Bearer <access token>
+```
+
+**`409 Conflict`**
+
+```json
+{
+  "type": "https://oriontek.com/problems/409",
+  "title": "Conflicto con el estado actual",
+  "status": 409,
+  "detail": "No se puede eliminar la dirección primaria sin reasignar otra como primaria",
+  "instance": "/api/v1/customers/b5139974-eb24-4365-b26f-9a732b6c361d/addresses/d372c38a-08e1-4ebb-b1fe-f337375d5b4c",
+  "timestamp": "2026-07-23T23:35:05.446415882Z"
+}
+```
 
 ## Autenticación y roles
 
