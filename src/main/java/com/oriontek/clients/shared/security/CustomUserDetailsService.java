@@ -23,7 +23,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user =
                 userRepository
                         .findByUsername(username)
-                        .or(() -> userRepository.findByEmailIgnoreCase(username))
+                        .or(() -> userRepository.findByEmail(username))
                         .orElseThrow(
                                 () ->
                                         new UsernameNotFoundException(

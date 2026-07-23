@@ -1,12 +1,12 @@
 package com.oriontek.clients.customer.api;
 
-import com.oriontek.clients.customer.api.dto.CustomerDetailResponse;
-import com.oriontek.clients.customer.api.dto.CustomerSummaryResponse;
+import com.oriontek.clients.customer.application.query.CustomerDetailView;
+import com.oriontek.clients.customer.application.query.CustomerSearchCriteria;
+import com.oriontek.clients.customer.application.query.CustomerSummaryView;
 import com.oriontek.clients.customer.application.query.GetCustomerByIdHandler;
 import com.oriontek.clients.customer.application.query.GetCustomerByIdQuery;
 import com.oriontek.clients.customer.application.query.SearchCustomersHandler;
 import com.oriontek.clients.customer.application.query.SearchCustomersQuery;
-import com.oriontek.clients.customer.domain.CustomerSearchCriteria;
 import com.oriontek.clients.customer.domain.CustomerStatus;
 import com.oriontek.clients.shared.pagination.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,13 +36,13 @@ public class CustomerQueryController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener el detalle de un cliente con sus direcciones")
-    public CustomerDetailResponse getById(@PathVariable UUID id) {
+    public CustomerDetailView getById(@PathVariable UUID id) {
         return getCustomerByIdHandler.handle(new GetCustomerByIdQuery(id));
     }
 
     @GetMapping
     @Operation(summary = "Listar clientes paginados con filtros y ordenamiento")
-    public PageResponse<CustomerSummaryResponse> search(
+    public PageResponse<CustomerSummaryView> search(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String city,

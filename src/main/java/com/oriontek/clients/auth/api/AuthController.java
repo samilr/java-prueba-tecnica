@@ -23,22 +23,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthApiMapper authApiMapper;
 
     @PostMapping("/login")
     @Operation(summary = "Autenticar y obtener tokens de acceso y refresco")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+        return authApiMapper.toResponse(authService.login(request.username(), request.password()));
     }
 
     @PostMapping("/register")
     @Operation(summary = "Registrar un nuevo usuario con rol USER")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        authApiMapper.toResponse(
+                                authService.register(
+                                        request.username(), request.email(), request.password())));
     }
 
     @PostMapping("/refresh")
     @Operation(summary = "Renovar el access token usando un refresh token")
     public AuthResponse refresh(@Valid @RequestBody RefreshRequest request) {
-        return authService.refresh(request);
+        return authApiMapper.toResponse(authService.refresh(request.refreshToken()));
     }
 }

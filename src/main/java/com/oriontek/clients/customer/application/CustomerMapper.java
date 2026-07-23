@@ -1,8 +1,8 @@
 package com.oriontek.clients.customer.application;
 
-import com.oriontek.clients.customer.api.dto.AddressResponse;
-import com.oriontek.clients.customer.api.dto.CustomerDetailResponse;
-import com.oriontek.clients.customer.api.dto.CustomerSummaryResponse;
+import com.oriontek.clients.customer.application.query.AddressView;
+import com.oriontek.clients.customer.application.query.CustomerDetailView;
+import com.oriontek.clients.customer.application.query.CustomerSummaryView;
 import com.oriontek.clients.customer.domain.Address;
 import com.oriontek.clients.customer.domain.Customer;
 import org.mapstruct.Mapper;
@@ -11,10 +11,10 @@ import org.mapstruct.Mapping;
 @Mapper
 public interface CustomerMapper {
 
-    @Mapping(target = "addressCount", expression = "java(customer.getAddresses().size())")
-    CustomerSummaryResponse toSummary(Customer customer);
+    @Mapping(target = "addressCount", source = "addressCount")
+    CustomerSummaryView toSummary(Customer customer, long addressCount);
 
-    CustomerDetailResponse toDetail(Customer customer);
+    CustomerDetailView toDetail(Customer customer);
 
-    AddressResponse toAddressResponse(Address address);
+    AddressView toAddressView(Address address);
 }

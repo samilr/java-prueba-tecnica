@@ -1,7 +1,7 @@
 package com.oriontek.clients.customer.infrastructure.persistence;
 
+import com.oriontek.clients.customer.application.query.CustomerSearchCriteria;
 import com.oriontek.clients.customer.domain.Customer;
-import com.oriontek.clients.customer.domain.CustomerSearchCriteria;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;

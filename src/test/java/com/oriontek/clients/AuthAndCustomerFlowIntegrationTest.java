@@ -6,8 +6,8 @@ import com.oriontek.clients.auth.api.dto.AuthResponse;
 import com.oriontek.clients.auth.api.dto.LoginRequest;
 import com.oriontek.clients.customer.api.dto.AddressRequest;
 import com.oriontek.clients.customer.api.dto.CreateCustomerRequest;
-import com.oriontek.clients.customer.api.dto.CustomerDetailResponse;
 import com.oriontek.clients.customer.api.dto.IdResponse;
+import com.oriontek.clients.customer.application.query.CustomerDetailView;
 import com.oriontek.clients.customer.domain.AddressType;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -102,12 +102,12 @@ class AuthAndCustomerFlowIntegrationTest extends AbstractIntegrationTest {
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(created.getBody()).isNotNull();
 
-        ResponseEntity<CustomerDetailResponse> detail =
+        ResponseEntity<CustomerDetailView> detail =
                 restTemplate.exchange(
                         "/api/v1/customers/" + created.getBody().id(),
                         HttpMethod.GET,
                         new HttpEntity<>(bearer(token)),
-                        CustomerDetailResponse.class);
+                        CustomerDetailView.class);
 
         assertThat(detail.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(detail.getBody()).isNotNull();

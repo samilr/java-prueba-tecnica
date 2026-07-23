@@ -1,11 +1,17 @@
 package com.oriontek.clients.customer.infrastructure.persistence;
 
+import com.oriontek.clients.customer.application.CustomerMapper;
+import com.oriontek.clients.customer.application.query.CustomerDetailView;
+import com.oriontek.clients.customer.application.query.CustomerQueryRepository;
+import com.oriontek.clients.customer.application.query.CustomerSearchCriteria;
+import com.oriontek.clients.customer.application.query.CustomerSummaryView;
 import com.oriontek.clients.customer.domain.Customer;
-import com.oriontek.clients.customer.domain.CustomerQueryRepository;
 import com.oriontek.clients.customer.domain.CustomerRepository;
-import com.oriontek.clients.customer.domain.CustomerSearchCriteria;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +22,7 @@ import org.springframework.stereotype.Repository;
 public class CustomerRepositoryAdapter implements CustomerRepository, CustomerQueryRepository {
 
     private final CustomerJpaRepository jpaRepository;
+    private final CustomerMapper customerMapper;
 
     @Override
     public Customer save(Customer customer) {
@@ -53,12 +60,30 @@ public class CustomerRepositoryAdapter implements CustomerRepository, CustomerQu
     }
 
     @Override
-    public Optional<Customer> findDetailById(UUID id) {
-        return jpaRepository.findWithAddressesById(id);
+    public Optional<CustomerDetailView> findDetailById(UUID id) {
+        return jpaRepository.findWithAddressesById(id).map(customerMapper::toDetail);
     }
 
     @Override
-    public Page<Customer> search(CustomerSearchCriteria criteria, Pageable pageable) {
-        return jpaRepository.findAll(CustomerSpecifications.fromCriteria(criteria), pageable);
+    public Page<CustomerSummaryView> search(CustomerSearchCriteria criteria, Pageable pageable) {
+        Page<Customer> page =
+                jpaRepository.findAll(CustomerSpecifications.fromCriteria(criteria), pageable);
+        Map<UUID, Long> addressCounts = countAddresses(page.getContent());
+        return page.map(
+                customer ->
+                        customerMapper.toSummary(
+                                customer, addressCounts.getOrDefault(customer.getId(), 0L)));
+    }
+
+    private Map<UUID, Long> countAddresses(List<Customer> customers) {
+        if (customers.isEmpty()) {
+            return Map.of();
+        }
+        List<UUID> ids = customers.stream().map(Customer::getId).toList();
+        return jpaRepository.countAddressesByCustomerIds(ids).stream()
+                .collect(
+                        Collectors.toMap(
+                                CustomerJpaRepository.AddressCountRow::getCustomerId,
+                                CustomerJpaRepository.AddressCountRow::getTotal));
     }
 }

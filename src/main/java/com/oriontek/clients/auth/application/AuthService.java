@@ -1,9 +1,5 @@
 package com.oriontek.clients.auth.application;
 
-import com.oriontek.clients.auth.api.dto.AuthResponse;
-import com.oriontek.clients.auth.api.dto.LoginRequest;
-import com.oriontek.clients.auth.api.dto.RefreshRequest;
-import com.oriontek.clients.auth.api.dto.RegisterRequest;
 import com.oriontek.clients.auth.domain.Role;
 import com.oriontek.clients.auth.domain.User;
 import com.oriontek.clients.auth.domain.UserRepository;
@@ -29,42 +25,36 @@ public class AuthService {
     private final JwtService jwtService;
 
     @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    public AuthTokens login(String username, String password) {
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+                new UsernamePasswordAuthenticationToken(username, password));
         User user =
                 userRepository
-                        .findByUsername(request.username())
-                        .or(() -> userRepository.findByEmailIgnoreCase(request.username()))
+                        .findByUsername(username)
+                        .or(() -> userRepository.findByEmail(username))
                         .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
         return issueTokens(user);
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsernameIgnoreCase(request.username())) {
-            throw new ConflictException(
-                    "El nombre de usuario ya está en uso: " + request.username());
+    public AuthTokens register(String username, String email, String password) {
+        if (userRepository.existsByUsername(username)) {
+            throw new ConflictException("El nombre de usuario ya está en uso: " + username);
         }
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
-            throw new ConflictException("El email ya está registrado: " + request.email());
+        if (userRepository.existsByEmail(email)) {
+            throw new ConflictException("El email ya está registrado: " + email);
         }
-        User user =
-                User.create(
-                        request.username(),
-                        request.email(),
-                        passwordEncoder.encode(request.password()),
-                        Role.USER);
+        User user = User.create(username, email, passwordEncoder.encode(password), Role.USER);
         return issueTokens(userRepository.save(user));
     }
 
     @Transactional(readOnly = true)
-    public AuthResponse refresh(RefreshRequest request) {
-        String token = request.refreshToken();
-        if (!jwtService.isValid(token) || jwtService.extractTokenType(token) != TokenType.REFRESH) {
+    public AuthTokens refresh(String refreshToken) {
+        if (!jwtService.isValid(refreshToken)
+                || jwtService.extractTokenType(refreshToken) != TokenType.REFRESH) {
             throw new BadCredentialsException("Refresh token inválido o expirado");
         }
-        String username = jwtService.extractUsername(token);
+        String username = jwtService.extractUsername(refreshToken);
         User user =
                 userRepository
                         .findByUsername(username)
@@ -72,11 +62,11 @@ public class AuthService {
         return issueTokens(user);
     }
 
-    private AuthResponse issueTokens(User user) {
+    private AuthTokens issueTokens(User user) {
         String role = user.getRole().name();
-        String accessToken = jwtService.generateAccessToken(user.getUsername(), role);
-        String refreshToken = jwtService.generateRefreshToken(user.getUsername(), role);
-        return AuthResponse.of(
-                accessToken, refreshToken, jwtService.accessTokenExpirationSeconds());
+        return new AuthTokens(
+                jwtService.generateAccessToken(user.getUsername(), role),
+                jwtService.generateRefreshToken(user.getUsername(), role),
+                jwtService.accessTokenExpirationSeconds());
     }
 }

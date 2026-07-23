@@ -3,8 +3,6 @@ package com.oriontek.clients.customer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.oriontek.clients.AbstractIntegrationTest;
-import com.oriontek.clients.customer.api.dto.AddressResponse;
-import com.oriontek.clients.customer.api.dto.CustomerDetailResponse;
 import com.oriontek.clients.customer.application.command.AddAddressCommand;
 import com.oriontek.clients.customer.application.command.AddAddressHandler;
 import com.oriontek.clients.customer.application.command.AddressInput;
@@ -12,6 +10,8 @@ import com.oriontek.clients.customer.application.command.CreateCustomerCommand;
 import com.oriontek.clients.customer.application.command.CreateCustomerHandler;
 import com.oriontek.clients.customer.application.command.UpdateAddressCommand;
 import com.oriontek.clients.customer.application.command.UpdateAddressHandler;
+import com.oriontek.clients.customer.application.query.AddressView;
+import com.oriontek.clients.customer.application.query.CustomerDetailView;
 import com.oriontek.clients.customer.application.query.GetCustomerByIdHandler;
 import com.oriontek.clients.customer.application.query.GetCustomerByIdQuery;
 import com.oriontek.clients.customer.domain.AddressType;
@@ -44,12 +44,12 @@ class PrimaryAddressReassignmentIntegrationTest extends AbstractIntegrationTest 
                         List.of(address("Santo Domingo", true))));
     }
 
-    private CustomerDetailResponse detail(UUID id) {
+    private CustomerDetailView detail(UUID id) {
         return getCustomerByIdHandler.handle(new GetCustomerByIdQuery(id));
     }
 
-    private long primaryCount(CustomerDetailResponse detail) {
-        return detail.addresses().stream().filter(AddressResponse::primary).count();
+    private long primaryCount(CustomerDetailView detail) {
+        return detail.addresses().stream().filter(AddressView::primary).count();
     }
 
     @Test
@@ -60,7 +60,7 @@ class PrimaryAddressReassignmentIntegrationTest extends AbstractIntegrationTest 
                 addAddressHandler.handle(new AddAddressCommand(customerId, address("Bani", false)));
 
         assertThat(addressId).isNotNull();
-        assertThat(detail(customerId).addresses().stream().map(AddressResponse::id))
+        assertThat(detail(customerId).addresses().stream().map(AddressView::id))
                 .contains(addressId);
     }
 
@@ -70,12 +70,12 @@ class PrimaryAddressReassignmentIntegrationTest extends AbstractIntegrationTest 
 
         addAddressHandler.handle(new AddAddressCommand(customerId, address("Santiago", true)));
 
-        CustomerDetailResponse detail = detail(customerId);
+        CustomerDetailView detail = detail(customerId);
         assertThat(detail.addresses()).hasSize(2);
         assertThat(primaryCount(detail)).isEqualTo(1);
         assertThat(
                         detail.addresses().stream()
-                                .filter(AddressResponse::primary)
+                                .filter(AddressView::primary)
                                 .findFirst()
                                 .orElseThrow()
                                 .city())
@@ -96,11 +96,11 @@ class PrimaryAddressReassignmentIntegrationTest extends AbstractIntegrationTest 
         updateAddressHandler.handle(
                 new UpdateAddressCommand(customerId, secondaryId, address("La Romana", true)));
 
-        CustomerDetailResponse detail = detail(customerId);
+        CustomerDetailView detail = detail(customerId);
         assertThat(primaryCount(detail)).isEqualTo(1);
         assertThat(
                         detail.addresses().stream()
-                                .filter(AddressResponse::primary)
+                                .filter(AddressView::primary)
                                 .findFirst()
                                 .orElseThrow()
                                 .id())

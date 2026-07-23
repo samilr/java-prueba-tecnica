@@ -1,9 +1,9 @@
-package com.oriontek.clients.customer.api.dto;
+package com.oriontek.clients.customer.application.query;
 
 import com.oriontek.clients.customer.domain.AddressType;
 import java.util.UUID;
 
-public record AddressResponse(
+public record AddressView(
         UUID id,
         String street,
         String city,

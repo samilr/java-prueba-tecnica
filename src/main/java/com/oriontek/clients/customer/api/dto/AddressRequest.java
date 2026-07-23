@@ -1,6 +1,5 @@
 package com.oriontek.clients.customer.api.dto;
 
-import com.oriontek.clients.customer.application.command.AddressInput;
 import com.oriontek.clients.customer.domain.AddressType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,9 +12,4 @@ public record AddressRequest(
         @Size(max = 100) String country,
         @Size(max = 20) String postalCode,
         @NotNull AddressType type,
-        boolean primary) {
-
-    public AddressInput toInput() {
-        return new AddressInput(street, city, state, country, postalCode, type, primary);
-    }
-}
+        boolean primary) {}

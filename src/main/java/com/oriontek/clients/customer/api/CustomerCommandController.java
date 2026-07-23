@@ -3,11 +3,9 @@ package com.oriontek.clients.customer.api;
 import com.oriontek.clients.customer.api.dto.CreateCustomerRequest;
 import com.oriontek.clients.customer.api.dto.IdResponse;
 import com.oriontek.clients.customer.api.dto.UpdateCustomerRequest;
-import com.oriontek.clients.customer.application.command.CreateCustomerCommand;
 import com.oriontek.clients.customer.application.command.CreateCustomerHandler;
 import com.oriontek.clients.customer.application.command.DeleteCustomerCommand;
 import com.oriontek.clients.customer.application.command.DeleteCustomerHandler;
-import com.oriontek.clients.customer.application.command.UpdateCustomerCommand;
 import com.oriontek.clients.customer.application.command.UpdateCustomerHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -37,22 +35,12 @@ public class CustomerCommandController {
     private final CreateCustomerHandler createCustomerHandler;
     private final UpdateCustomerHandler updateCustomerHandler;
     private final DeleteCustomerHandler deleteCustomerHandler;
+    private final CustomerApiMapper customerApiMapper;
 
     @PostMapping
     @Operation(summary = "Crear un cliente con sus direcciones")
     public ResponseEntity<IdResponse> create(@Valid @RequestBody CreateCustomerRequest request) {
-        UUID id =
-                createCustomerHandler.handle(
-                        new CreateCustomerCommand(
-                                request.name(),
-                                request.email(),
-                                request.phone(),
-                                request.identificationNumber(),
-                                request.addresses().stream()
-                                        .map(
-                                                com.oriontek.clients.customer.api.dto.AddressRequest
-                                                        ::toInput)
-                                        .toList()));
+        UUID id = createCustomerHandler.handle(customerApiMapper.toCommand(request));
         return ResponseEntity.created(URI.create("/api/v1/customers/" + id))
                 .body(new IdResponse(id));
     }
@@ -61,13 +49,7 @@ public class CustomerCommandController {
     @Operation(summary = "Actualizar los datos de un cliente")
     public ResponseEntity<Void> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateCustomerRequest request) {
-        updateCustomerHandler.handle(
-                new UpdateCustomerCommand(
-                        id,
-                        request.name(),
-                        request.email(),
-                        request.phone(),
-                        request.identificationNumber()));
+        updateCustomerHandler.handle(customerApiMapper.toCommand(id, request));
         return ResponseEntity.noContent().build();
     }
 
