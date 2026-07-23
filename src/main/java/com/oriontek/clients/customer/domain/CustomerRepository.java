@@ -7,6 +7,8 @@ public interface CustomerRepository {
 
     Customer save(Customer customer);
 
+    Customer saveAndFlush(Customer customer);
+
     Optional<Customer> findById(UUID id);
 
     boolean existsByEmail(String email);

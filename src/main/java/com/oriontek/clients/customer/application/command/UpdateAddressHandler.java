@@ -29,6 +29,10 @@ public class UpdateAddressHandler implements CommandHandler<UpdateAddressCommand
                                                 "Cliente", command.customerId()));
         var input = command.address();
         String country = StringUtils.hasText(input.country()) ? input.country() : DEFAULT_COUNTRY;
+        if (input.primary()) {
+            customer.demotePrimaryAddresses();
+            customerRepository.saveAndFlush(customer);
+        }
         customer.updateAddress(
                 command.addressId(),
                 input.street(),

@@ -96,6 +96,10 @@ public class Customer {
         return Collections.unmodifiableList(addresses);
     }
 
+    public void demotePrimaryAddresses() {
+        addresses.forEach(existing -> existing.markPrimary(false));
+    }
+
     public Address addAddress(Address address) {
         if (addresses.isEmpty()) {
             address.markPrimary(true);

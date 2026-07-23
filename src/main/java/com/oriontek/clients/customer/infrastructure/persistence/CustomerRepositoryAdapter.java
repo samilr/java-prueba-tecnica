@@ -23,6 +23,11 @@ public class CustomerRepositoryAdapter implements CustomerRepository, CustomerQu
     }
 
     @Override
+    public Customer saveAndFlush(Customer customer) {
+        return jpaRepository.saveAndFlush(customer);
+    }
+
+    @Override
     public Optional<Customer> findById(UUID id) {
         return jpaRepository.findWithAddressesById(id);
     }

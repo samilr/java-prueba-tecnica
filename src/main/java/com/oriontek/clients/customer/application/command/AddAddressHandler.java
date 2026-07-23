@@ -26,7 +26,12 @@ public class AddAddressHandler implements CommandHandler<AddAddressCommand, UUID
                                 () ->
                                         ResourceNotFoundException.of(
                                                 "Cliente", command.customerId()));
-        Address added = customer.addAddress(AddressFactory.from(command.address()));
+        Address newAddress = AddressFactory.from(command.address());
+        if (newAddress.isPrimary() && !customer.getAddresses().isEmpty()) {
+            customer.demotePrimaryAddresses();
+            customerRepository.saveAndFlush(customer);
+        }
+        Address added = customer.addAddress(newAddress);
         customerRepository.save(customer);
         return added.getId();
     }
