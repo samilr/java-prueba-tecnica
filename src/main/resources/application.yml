@@ -38,8 +38,13 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      show-components: always
+      roles: ADMIN
       probes:
         enabled: true
+      group:
+        readiness:
+          include: readinessState,db
   health:
     db:
       enabled: true

@@ -143,6 +143,27 @@ Una vez arriba:
 - OpenAPI JSON: <http://localhost:8080/v3/api-docs>
 - Health: <http://localhost:8080/actuator/health>
 
+El health expone el estado de cada componente, incluida la **base de datos**:
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "db": { "status": "UP" },
+    "diskSpace": { "status": "UP" },
+    "livenessState": { "status": "UP" },
+    "ping": { "status": "UP" },
+    "readinessState": { "status": "UP" }
+  },
+  "groups": ["liveness", "readiness"]
+}
+```
+
+Los **detalles internos** de cada componente (motor de base de datos, espacio en disco) solo se
+muestran a un usuario autenticado con rol **ADMIN**. El grupo `readiness` incluye la base de datos,
+de modo que si Postgres cae, `/actuator/health/readiness` responde `503 DOWN` mientras que
+`/actuator/health/liveness` sigue en `200 UP`: la app está viva pero no lista para recibir tráfico.
+
 ### Desarrollo local (sin contenedor de la app)
 
 ```bash
