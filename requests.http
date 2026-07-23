@@ -1,0 +1,133 @@
+@host = http://localhost:8080
+@adminUser = admin
+@adminPass = Admin123!
+
+### Health check (público)
+GET {{host}}/actuator/health
+
+### Login como ADMIN
+# @name login
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{adminUser}}",
+  "password": "{{adminPass}}"
+}
+
+### Guardar el access token de la respuesta anterior
+@accessToken = {{login.response.body.accessToken}}
+@refreshToken = {{login.response.body.refreshToken}}
+
+### Registrar un nuevo usuario (rol USER)
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "nuevo.usuario",
+  "email": "nuevo.usuario@oriontek.com",
+  "password": "Password123"
+}
+
+### Refrescar el access token
+POST {{host}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Listar clientes (paginado + filtros) — ADMIN o USER
+GET {{host}}/api/v1/customers?page=0&size=10&sort=name,asc&city=Santo Domingo&status=ACTIVE
+Authorization: Bearer {{accessToken}}
+
+### Crear un cliente con direcciones — ADMIN
+# @name createCustomer
+POST {{host}}/api/v1/customers
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Cliente de Ejemplo",
+  "email": "cliente.ejemplo@correo.com",
+  "phone": "809-555-9999",
+  "identificationNumber": "40200123459",
+  "addresses": [
+    {
+      "street": "Av. Principal 100",
+      "city": "Santo Domingo",
+      "state": "Distrito Nacional",
+      "country": "República Dominicana",
+      "postalCode": "10101",
+      "type": "HOME",
+      "primary": true
+    },
+    {
+      "street": "Calle Secundaria 5",
+      "city": "Santiago",
+      "state": "Santiago",
+      "postalCode": "51000",
+      "type": "WORK",
+      "primary": false
+    }
+  ]
+}
+
+### Guardar el id del cliente creado
+@customerId = {{createCustomer.response.body.id}}
+
+### Obtener detalle de un cliente — ADMIN o USER
+GET {{host}}/api/v1/customers/{{customerId}}
+Authorization: Bearer {{accessToken}}
+
+### Actualizar datos del cliente — ADMIN
+PUT {{host}}/api/v1/customers/{{customerId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Cliente de Ejemplo Actualizado",
+  "email": "cliente.ejemplo@correo.com",
+  "phone": "829-555-0000",
+  "identificationNumber": "40200123459"
+}
+
+### Agregar una dirección — ADMIN
+# @name addAddress
+POST {{host}}/api/v1/customers/{{customerId}}/addresses
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "street": "Calle Nueva 33",
+  "city": "La Romana",
+  "state": "La Romana",
+  "postalCode": "22000",
+  "type": "BILLING",
+  "primary": false
+}
+
+### Guardar el id de la dirección creada
+@addressId = {{addAddress.response.body.id}}
+
+### Actualizar una dirección — ADMIN
+PUT {{host}}/api/v1/customers/{{customerId}}/addresses/{{addressId}}
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "street": "Calle Nueva 33 (corregida)",
+  "city": "La Romana",
+  "state": "La Romana",
+  "postalCode": "22000",
+  "type": "BILLING",
+  "primary": true
+}
+
+### Eliminar una dirección — ADMIN
+DELETE {{host}}/api/v1/customers/{{customerId}}/addresses/{{addressId}}
+Authorization: Bearer {{accessToken}}
+
+### Desactivar (soft delete) un cliente — ADMIN
+DELETE {{host}}/api/v1/customers/{{customerId}}
+Authorization: Bearer {{accessToken}}
