@@ -13,6 +13,7 @@ paginación con filtros, migraciones versionadas y documentación **OpenAPI**. T
 ## Tabla de contenido
 
 - [Cómo levantar la aplicación](#cómo-levantar-la-aplicación)
+  - [Usuarios disponibles](#usuarios-disponibles)
 - [Stack tecnológico](#stack-tecnológico)
 - [Arquitectura](#arquitectura)
 - [Estructura del proyecto](#estructura-del-proyecto)
@@ -53,14 +54,29 @@ Una vez arriba, la documentación interactiva de la API queda disponible en **Sw
 
 ### 👉 <http://localhost:8080/swagger-ui.html>
 
-Desde ahí se pueden probar todos los endpoints. Usa el botón **Authorize** para enviar el token
-JWT obtenido en `POST /api/v1/auth/login` (credenciales demo más abajo).
+Desde ahí se pueden probar todos los endpoints: autentícate con `POST /api/v1/auth/login`, copia
+el `accessToken` de la respuesta y pégalo en el botón **Authorize**.
 
 | Recurso | URL |
 |---|---|
 | **Swagger UI** | <http://localhost:8080/swagger-ui.html> |
 | OpenAPI JSON | <http://localhost:8080/v3/api-docs> |
 | Health check | <http://localhost:8080/actuator/health> |
+
+### Usuarios disponibles
+
+La aplicación arranca con dos usuarios ya creados, uno por cada rol:
+
+| Usuario | Contraseña | Rol | Alcance dentro de la aplicación |
+|---|---|---|---|
+| `admin` | `Admin123!` | **ADMIN** | Acceso total: consultar clientes y además crearlos, actualizarlos, darlos de baja y gestionar sus direcciones |
+| `user` | `User123!` | **USER** | Solo lectura: listar clientes con filtros y consultar el detalle con sus direcciones |
+
+Si un usuario con rol `USER` intenta una operación de escritura, la API responde **`403 Forbidden`**.
+Los endpoints de autenticación, Swagger UI y el health check son **públicos**, no requieren token.
+
+Puedes registrar usuarios adicionales con `POST /api/v1/auth/register`; se crean siempre con rol
+`USER`, de modo que no es posible obtener privilegios de administrador a través de la API.
 
 Para detener el stack:
 
@@ -234,15 +250,9 @@ src/test/java/com/oriontek/clients
 
 ## Credenciales demo
 
-El seed (`V2__seed.sql`) crea dos usuarios y 18 clientes dominicanos con 1–4 direcciones cada uno.
-
-| Rol | Usuario | Contraseña |
-|---|---|---|
-| ADMIN | `admin` | `Admin123!` |
-| USER | `user` | `User123!` |
-
-En Swagger UI usa el botón **Authorize** e introduce el `accessToken` que devuelve
-`POST /api/v1/auth/login`.
+El seed (`V2__seed.sql`) crea los dos usuarios descritos en
+[Usuarios disponibles](#usuarios-disponibles) junto con 18 clientes dominicanos, cada uno con
+entre 1 y 4 direcciones repartidas por Santo Domingo, Santiago, La Romana y otras provincias.
 
 > Los datos de ejemplo se cargan siempre mediante la migración `V2__seed.sql`, sin depender del
 > perfil activo, de modo que el entorno sea reproducible. El perfil `demo` únicamente eleva el
