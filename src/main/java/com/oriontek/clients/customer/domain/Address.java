@@ -64,7 +64,7 @@ public class Address {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    Address(
+    private Address(
             String street,
             String city,
             String state,
@@ -79,6 +79,17 @@ public class Address {
         this.postalCode = postalCode;
         this.type = type;
         this.primary = primary;
+    }
+
+    public static Address create(
+            String street,
+            String city,
+            String state,
+            String country,
+            String postalCode,
+            AddressType type,
+            boolean primary) {
+        return new Address(street, city, state, country, postalCode, type, primary);
     }
 
     void assignTo(Customer customer) {
