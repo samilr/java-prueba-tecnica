@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -42,6 +43,8 @@ public class SecurityConfig {
         "/swagger-ui.html"
     };
 
+    private static final String[] CUSTOMER_PATHS = {"/api/v1/customers", "/api/v1/customers/**"};
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
     private final SecurityProblemSupport securityProblemSupport;
@@ -59,6 +62,14 @@ public class SecurityConfig {
                         auth ->
                                 auth.requestMatchers(PUBLIC_PATHS)
                                         .permitAll()
+                                        .requestMatchers(HttpMethod.GET, CUSTOMER_PATHS)
+                                        .hasAnyRole("ADMIN", "USER")
+                                        .requestMatchers(HttpMethod.POST, CUSTOMER_PATHS)
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(HttpMethod.PUT, CUSTOMER_PATHS)
+                                        .hasRole("ADMIN")
+                                        .requestMatchers(HttpMethod.DELETE, CUSTOMER_PATHS)
+                                        .hasRole("ADMIN")
                                         .anyRequest()
                                         .authenticated())
                 .exceptionHandling(
