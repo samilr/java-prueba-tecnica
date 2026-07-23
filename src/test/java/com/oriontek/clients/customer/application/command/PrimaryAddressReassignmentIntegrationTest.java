@@ -1,20 +1,13 @@
-package com.oriontek.clients.customer;
+package com.oriontek.clients.customer.application.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.oriontek.clients.AbstractIntegrationTest;
-import com.oriontek.clients.customer.application.command.AddAddressCommand;
-import com.oriontek.clients.customer.application.command.AddAddressHandler;
-import com.oriontek.clients.customer.application.command.AddressInput;
-import com.oriontek.clients.customer.application.command.CreateCustomerCommand;
-import com.oriontek.clients.customer.application.command.CreateCustomerHandler;
-import com.oriontek.clients.customer.application.command.UpdateAddressCommand;
-import com.oriontek.clients.customer.application.command.UpdateAddressHandler;
 import com.oriontek.clients.customer.application.query.AddressView;
 import com.oriontek.clients.customer.application.query.CustomerDetailView;
 import com.oriontek.clients.customer.application.query.GetCustomerByIdHandler;
 import com.oriontek.clients.customer.application.query.GetCustomerByIdQuery;
 import com.oriontek.clients.customer.domain.AddressType;
+import com.oriontek.clients.support.AbstractIntegrationTest;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

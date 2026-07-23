@@ -1,7 +1,6 @@
-package com.oriontek.clients.config;
+package com.oriontek.clients.shared.ratelimit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oriontek.clients.shared.security.RateLimitFilter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;

@@ -1,13 +1,12 @@
-package com.oriontek.clients.customer.infrastructure;
+package com.oriontek.clients.customer.infrastructure.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.oriontek.clients.AbstractIntegrationTest;
 import com.oriontek.clients.customer.domain.Address;
 import com.oriontek.clients.customer.domain.AddressType;
 import com.oriontek.clients.customer.domain.Customer;
-import com.oriontek.clients.customer.infrastructure.persistence.CustomerJpaRepository;
+import com.oriontek.clients.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

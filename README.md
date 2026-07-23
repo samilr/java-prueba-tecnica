@@ -176,6 +176,11 @@ mvn spring-boot:run
 
 El seed (`V2__seed.sql`) crea dos usuarios y ~18 clientes dominicanos con 1–4 direcciones.
 
+> **Sobre el perfil `demo`:** los datos de ejemplo se cargan siempre mediante la migración
+> `V2__seed.sql`, no dependen del perfil activo. Esto mantiene el entorno reproducible y hace que
+> los tests de integración partan siempre del mismo estado. El perfil `demo` únicamente eleva el
+> nivel de log de la aplicación a `DEBUG`.
+
 | Rol | Usuario | Contraseña |
 |---|---|---|
 | ADMIN | `admin` | `Admin123!` |

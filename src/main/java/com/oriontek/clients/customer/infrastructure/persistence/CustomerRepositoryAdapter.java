@@ -1,6 +1,6 @@
 package com.oriontek.clients.customer.infrastructure.persistence;
 
-import com.oriontek.clients.customer.application.CustomerMapper;
+import com.oriontek.clients.customer.application.CustomerViewMapper;
 import com.oriontek.clients.customer.application.query.CustomerDetailView;
 import com.oriontek.clients.customer.application.query.CustomerQueryRepository;
 import com.oriontek.clients.customer.application.query.CustomerSearchCriteria;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Repository;
 public class CustomerRepositoryAdapter implements CustomerRepository, CustomerQueryRepository {
 
     private final CustomerJpaRepository jpaRepository;
-    private final CustomerMapper customerMapper;
+    private final CustomerViewMapper customerViewMapper;
 
     @Override
     public Customer save(Customer customer) {
@@ -61,7 +61,7 @@ public class CustomerRepositoryAdapter implements CustomerRepository, CustomerQu
 
     @Override
     public Optional<CustomerDetailView> findDetailById(UUID id) {
-        return jpaRepository.findWithAddressesById(id).map(customerMapper::toDetail);
+        return jpaRepository.findWithAddressesById(id).map(customerViewMapper::toDetail);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class CustomerRepositoryAdapter implements CustomerRepository, CustomerQu
         Map<UUID, Long> addressCounts = countAddresses(page.getContent());
         return page.map(
                 customer ->
-                        customerMapper.toSummary(
+                        customerViewMapper.toSummary(
                                 customer, addressCounts.getOrDefault(customer.getId(), 0L)));
     }
 

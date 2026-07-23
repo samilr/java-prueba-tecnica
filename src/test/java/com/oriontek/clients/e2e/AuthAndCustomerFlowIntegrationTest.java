@@ -1,4 +1,4 @@
-package com.oriontek.clients;
+package com.oriontek.clients.e2e;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,6 +9,7 @@ import com.oriontek.clients.customer.api.dto.CreateCustomerRequest;
 import com.oriontek.clients.customer.api.dto.IdResponse;
 import com.oriontek.clients.customer.application.query.CustomerDetailView;
 import com.oriontek.clients.customer.domain.AddressType;
+import com.oriontek.clients.support.AbstractIntegrationTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

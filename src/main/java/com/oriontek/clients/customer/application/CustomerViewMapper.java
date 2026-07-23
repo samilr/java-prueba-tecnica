@@ -9,7 +9,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper
-public interface CustomerMapper {
+public interface CustomerViewMapper {
 
     @Mapping(target = "addressCount", source = "addressCount")
     CustomerSummaryView toSummary(Customer customer, long addressCount);

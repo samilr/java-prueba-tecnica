@@ -1,4 +1,4 @@
-package com.oriontek.clients.config;
+package com.oriontek.clients.shared.ratelimit;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

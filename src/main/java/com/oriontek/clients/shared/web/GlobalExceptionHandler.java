@@ -1,8 +1,11 @@
-package com.oriontek.clients.shared.exception;
+package com.oriontek.clients.shared.web;
 
+import com.oriontek.clients.shared.exception.BusinessRuleException;
+import com.oriontek.clients.shared.exception.ConflictException;
+import com.oriontek.clients.shared.exception.DomainException;
+import com.oriontek.clients.shared.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -40,7 +43,7 @@ public class GlobalExceptionHandler {
                                                         : error.getDefaultMessage()))
                         .toList();
         ProblemDetail problem =
-                build(
+                ProblemDetails.of(
                         HttpStatus.BAD_REQUEST,
                         "Error de validación",
                         "Uno o más campos son inválidos");
@@ -50,7 +53,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
-        return build(HttpStatus.BAD_REQUEST, "Error de validación", ex.getMessage());
+        return ProblemDetails.of(HttpStatus.BAD_REQUEST, "Error de validación", ex.getMessage());
     }
 
     @ExceptionHandler({
@@ -58,7 +61,7 @@ public class GlobalExceptionHandler {
         MethodArgumentTypeMismatchException.class
     })
     public ProblemDetail handleBadRequest(Exception ex) {
-        return build(
+        return ProblemDetails.of(
                 HttpStatus.BAD_REQUEST,
                 "Solicitud inválida",
                 "El cuerpo o los parámetros de la solicitud no son válidos");
@@ -66,18 +69,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleNotFound(ResourceNotFoundException ex) {
-        return build(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
+        return ProblemDetails.of(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
     }
 
     @ExceptionHandler({ConflictException.class, BusinessRuleException.class})
     public ProblemDetail handleConflict(DomainException ex) {
-        return build(HttpStatus.CONFLICT, "Conflicto con el estado actual", ex.getMessage());
+        return ProblemDetails.of(
+                HttpStatus.CONFLICT, "Conflicto con el estado actual", ex.getMessage());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
         log.warn("Violación de integridad de datos: {}", ex.getMostSpecificCause().getMessage());
-        return build(
+        return ProblemDetails.of(
                 HttpStatus.CONFLICT,
                 "Conflicto de datos",
                 "La operación viola una restricción de unicidad o integridad");
@@ -85,7 +89,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ProblemDetail handleOptimisticLock(OptimisticLockingFailureException ex) {
-        return build(
+        return ProblemDetails.of(
                 HttpStatus.CONFLICT,
                 "Conflicto de concurrencia",
                 "El recurso fue modificado por otra operación, intente nuevamente");
@@ -93,7 +97,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentials(BadCredentialsException ex) {
-        return build(
+        return ProblemDetails.of(
                 HttpStatus.UNAUTHORIZED,
                 "Credenciales inválidas",
                 "Usuario o contraseña incorrectos");
@@ -101,29 +105,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleAuthentication(AuthenticationException ex) {
-        return build(HttpStatus.UNAUTHORIZED, "No autenticado", "Autenticación requerida");
+        return ProblemDetails.of(
+                HttpStatus.UNAUTHORIZED, "No autenticado", "Autenticación requerida");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
-        return build(
+        return ProblemDetails.of(
                 HttpStatus.FORBIDDEN, "Acceso denegado", "No tiene permisos para esta operación");
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex, HttpServletRequest request) {
         log.error("Error no controlado en {} {}", request.getMethod(), request.getRequestURI(), ex);
-        return build(
+        return ProblemDetails.of(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Error interno",
                 "Ocurrió un error inesperado, contacte al administrador");
-    }
-
-    private ProblemDetail build(HttpStatus status, String title, String detail) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
-        problem.setTitle(title);
-        problem.setType(URI.create("https://oriontek.com/problems/" + status.value()));
-        problem.setProperty("timestamp", java.time.Instant.now().toString());
-        return problem;
     }
 }

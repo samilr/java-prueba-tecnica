@@ -1,7 +1,7 @@
-package com.oriontek.clients.shared.security;
+package com.oriontek.clients.shared.ratelimit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oriontek.clients.config.RateLimitProperties;
+import com.oriontek.clients.shared.web.ProblemDetails;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -11,10 +11,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import org.springframework.http.HttpHeaders;
@@ -103,12 +101,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private void writeTooManyRequests(HttpServletResponse response, long retryAfterSeconds)
             throws IOException {
         ProblemDetail problem =
-                ProblemDetail.forStatusAndDetail(
+                ProblemDetails.of(
                         HttpStatus.TOO_MANY_REQUESTS,
+                        "Demasiadas solicitudes",
                         "Se ha excedido el límite de solicitudes, intente más tarde");
-        problem.setTitle("Demasiadas solicitudes");
-        problem.setType(URI.create("https://oriontek.com/problems/429"));
-        problem.setProperty("timestamp", Instant.now().toString());
         problem.setProperty("retryAfterSeconds", retryAfterSeconds);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));

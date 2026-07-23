@@ -1,4 +1,4 @@
-package com.oriontek.clients;
+package com.oriontek.clients.support;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

@@ -1,12 +1,11 @@
 package com.oriontek.clients.shared.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oriontek.clients.shared.web.ProblemDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SecurityProblemSupport implements AuthenticationEntryPoint, AccessDeniedHandler {
+public class SecurityProblemDetailHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
 
@@ -51,10 +50,7 @@ public class SecurityProblemSupport implements AuthenticationEntryPoint, AccessD
 
     private void write(HttpServletResponse response, HttpStatus status, String title, String detail)
             throws IOException {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
-        problem.setTitle(title);
-        problem.setType(URI.create("https://oriontek.com/problems/" + status.value()));
-        problem.setProperty("timestamp", Instant.now().toString());
+        ProblemDetail problem = ProblemDetails.of(status, title, detail);
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

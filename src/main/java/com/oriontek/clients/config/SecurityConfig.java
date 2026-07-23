@@ -1,9 +1,9 @@
 package com.oriontek.clients.config;
 
+import com.oriontek.clients.shared.ratelimit.RateLimitFilter;
 import com.oriontek.clients.shared.security.JwtAuthenticationFilter;
 import com.oriontek.clients.shared.security.JwtProperties;
-import com.oriontek.clients.shared.security.RateLimitFilter;
-import com.oriontek.clients.shared.security.SecurityProblemSupport;
+import com.oriontek.clients.shared.security.SecurityProblemDetailHandler;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
-    private final SecurityProblemSupport securityProblemSupport;
+    private final SecurityProblemDetailHandler securityProblemDetailHandler;
 
     @Value("${app.cors.allowed-origins:*}")
     private String allowedOrigins;
@@ -74,8 +74,8 @@ public class SecurityConfig {
                                         .authenticated())
                 .exceptionHandling(
                         handling ->
-                                handling.authenticationEntryPoint(securityProblemSupport)
-                                        .accessDeniedHandler(securityProblemSupport))
+                                handling.authenticationEntryPoint(securityProblemDetailHandler)
+                                        .accessDeniedHandler(securityProblemDetailHandler))
                 .addFilterBefore(
                         jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
