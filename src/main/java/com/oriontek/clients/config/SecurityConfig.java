@@ -2,6 +2,7 @@ package com.oriontek.clients.config;
 
 import com.oriontek.clients.shared.security.JwtAuthenticationFilter;
 import com.oriontek.clients.shared.security.JwtProperties;
+import com.oriontek.clients.shared.security.RateLimitFilter;
 import com.oriontek.clients.shared.security.SecurityProblemSupport;
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +43,7 @@ public class SecurityConfig {
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final SecurityProblemSupport securityProblemSupport;
 
     @Value("${app.cors.allowed-origins:*}")
@@ -64,7 +66,8 @@ public class SecurityConfig {
                                 handling.authenticationEntryPoint(securityProblemSupport)
                                         .accessDeniedHandler(securityProblemSupport))
                 .addFilterBefore(
-                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 

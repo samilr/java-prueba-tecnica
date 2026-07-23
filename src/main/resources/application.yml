@@ -62,7 +62,7 @@ app:
     login:
       capacity: 10
       refill-period-seconds: 60
-    default:
+    standard:
       capacity: 100
       refill-period-seconds: 60
   cors:
