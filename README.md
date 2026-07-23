@@ -133,6 +133,10 @@ Esto levanta:
 - **app** — la API, que espera a que Postgres esté *healthy* (`depends_on: service_healthy`),
   ejecuta las migraciones Flyway (esquema + seed) y arranca en el puerto `8080`.
 
+> Si el puerto `5432` ya está ocupado por otro Postgres en tu máquina, cambia el puerto del
+> host sin tocar nada más: `POSTGRES_PORT=5434 docker compose up --build` (la app se conecta a
+> la base por la red interna, así que el mapeo externo es solo para acceso desde el host).
+
 Una vez arriba:
 
 - Swagger UI: <http://localhost:8080/swagger-ui.html>
