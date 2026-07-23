@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/customers")
-@Tag(name = "Customers - Queries", description = "Operaciones de lectura sobre clientes")
+@Tag(name = "Customers", description = "Gestión de clientes y sus direcciones")
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 @RequiredArgsConstructor
