@@ -53,6 +53,18 @@ class PrimaryAddressReassignmentIntegrationTest extends AbstractIntegrationTest 
     }
 
     @Test
+    void addingAddressReturnsTheGeneratedIdentifier() {
+        UUID customerId = createCustomer("80000000003");
+
+        UUID addressId =
+                addAddressHandler.handle(new AddAddressCommand(customerId, address("Bani", false)));
+
+        assertThat(addressId).isNotNull();
+        assertThat(detail(customerId).addresses().stream().map(AddressResponse::id))
+                .contains(addressId);
+    }
+
+    @Test
     void addingNewPrimaryAddressDemotesThePreviousOne() {
         UUID customerId = createCustomer("80000000001");
 
