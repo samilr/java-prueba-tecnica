@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: oriontek-clients-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:demo}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/oriontek}
+    username: ${DB_USERNAME:oriontek}
+    password: ${DB_PASSWORD:oriontek}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    placeholder-replacement: false
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-in-production-this-is-a-demo-secret-key-min-256-bits-long}
+      access-token-expiration: ${JWT_ACCESS_EXPIRATION:900}
+      refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800}
+      issuer: oriontek
+  rate-limit:
+    login:
+      capacity: 10
+      refill-period-seconds: 60
+    default:
+      capacity: 100
+      refill-period-seconds: 60
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+
+logging:
+  level:
+    root: INFO
+    com.oriontek.clients: INFO
