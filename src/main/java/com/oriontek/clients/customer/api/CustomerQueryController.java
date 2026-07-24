@@ -9,9 +9,11 @@ import com.oriontek.clients.customer.application.query.SearchCustomersHandler;
 import com.oriontek.clients.customer.application.query.SearchCustomersQuery;
 import com.oriontek.clients.customer.domain.CustomerStatus;
 import com.oriontek.clients.shared.pagination.PageResponse;
+import com.oriontek.clients.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -36,19 +38,21 @@ public class CustomerQueryController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener el detalle de un cliente con sus direcciones")
-    public CustomerDetailView getById(@PathVariable UUID id) {
-        return getCustomerByIdHandler.handle(new GetCustomerByIdQuery(id));
+    public ApiResponse<CustomerDetailView> getById(@PathVariable UUID id) {
+        return ApiResponse.ok(getCustomerByIdHandler.handle(new GetCustomerByIdQuery(id)));
     }
 
     @GetMapping
     @Operation(summary = "Listar clientes paginados con filtros y ordenamiento")
-    public PageResponse<CustomerSummaryView> search(
+    public ApiResponse<List<CustomerSummaryView>> search(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) CustomerStatus status,
             @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
         CustomerSearchCriteria criteria = new CustomerSearchCriteria(name, email, city, status);
-        return searchCustomersHandler.handle(new SearchCustomersQuery(criteria, pageable));
+        PageResponse<CustomerSummaryView> page =
+                searchCustomersHandler.handle(new SearchCustomersQuery(criteria, pageable));
+        return ApiResponse.paged(page);
     }
 }

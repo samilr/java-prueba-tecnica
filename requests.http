@@ -16,8 +16,8 @@ Content-Type: application/json
 }
 
 ### Guardar el access token de la respuesta anterior
-@accessToken = {{login.response.body.accessToken}}
-@refreshToken = {{login.response.body.refreshToken}}
+@accessToken = {{login.response.body.data.accessToken}}
+@refreshToken = {{login.response.body.data.refreshToken}}
 
 ### Registrar un nuevo usuario (rol USER)
 POST {{host}}/api/v1/auth/register
@@ -74,7 +74,7 @@ Authorization: Bearer {{accessToken}}
 }
 
 ### Guardar el id del cliente creado
-@customerId = {{createCustomer.response.body.id}}
+@customerId = {{createCustomer.response.body.data.id}}
 
 ### Obtener detalle de un cliente — ADMIN o USER
 GET {{host}}/api/v1/customers/{{customerId}}
@@ -108,7 +108,7 @@ Authorization: Bearer {{accessToken}}
 }
 
 ### Guardar el id de la dirección creada
-@addressId = {{addAddress.response.body.id}}
+@addressId = {{addAddress.response.body.data.id}}
 
 ### Actualizar una dirección — ADMIN
 PUT {{host}}/api/v1/customers/{{customerId}}/addresses/{{addressId}}

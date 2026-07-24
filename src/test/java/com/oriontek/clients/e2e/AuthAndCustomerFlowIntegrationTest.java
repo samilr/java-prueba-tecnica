@@ -8,13 +8,16 @@ import com.oriontek.clients.customer.api.dto.AddressRequest;
 import com.oriontek.clients.customer.api.dto.CreateCustomerRequest;
 import com.oriontek.clients.customer.api.dto.IdResponse;
 import com.oriontek.clients.customer.application.query.CustomerDetailView;
+import com.oriontek.clients.customer.application.query.CustomerSummaryView;
 import com.oriontek.clients.customer.domain.AddressType;
+import com.oriontek.clients.shared.web.ApiResponse;
 import com.oriontek.clients.support.AbstractIntegrationTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,15 +30,19 @@ class AuthAndCustomerFlowIntegrationTest extends AbstractIntegrationTest {
     @Autowired private TestRestTemplate restTemplate;
 
     private String loginAsAdmin() {
-        ResponseEntity<AuthResponse> response =
-                restTemplate.postForEntity(
+        ResponseEntity<ApiResponse<AuthResponse>> response =
+                restTemplate.exchange(
                         "/api/v1/auth/login",
-                        new LoginRequest("admin", "Admin123!"),
-                        AuthResponse.class);
+                        HttpMethod.POST,
+                        new HttpEntity<>(new LoginRequest("admin", "Admin123!")),
+                        new ParameterizedTypeReference<>() {});
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().accessToken()).isNotBlank();
-        return response.getBody().accessToken();
+        assertThat(response.getBody().successful()).isTrue();
+        assertThat(response.getBody().error()).isNull();
+        assertThat(response.getBody().data().accessToken()).isNotBlank();
+        return response.getBody().data().accessToken();
     }
 
     private HttpHeaders bearer(String token) {
@@ -46,25 +53,38 @@ class AuthAndCustomerFlowIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void protectedEndpointRejectsRequestWithoutToken() {
-        ResponseEntity<String> response =
-                restTemplate.getForEntity("/api/v1/customers", String.class);
+        ResponseEntity<ApiResponse<Void>> response =
+                restTemplate.exchange(
+                        "/api/v1/customers",
+                        HttpMethod.GET,
+                        HttpEntity.EMPTY,
+                        new ParameterizedTypeReference<>() {});
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().successful()).isFalse();
+        assertThat(response.getBody().data()).isNull();
+        assertThat(response.getBody().error().status()).isEqualTo(401);
     }
 
     @Test
     void loginThenAccessProtectedListing() {
         String token = loginAsAdmin();
 
-        ResponseEntity<String> response =
+        ResponseEntity<ApiResponse<List<CustomerSummaryView>>> response =
                 restTemplate.exchange(
                         "/api/v1/customers?size=5",
                         HttpMethod.GET,
                         new HttpEntity<>(bearer(token)),
-                        String.class);
+                        new ParameterizedTypeReference<>() {});
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("totalElements");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().successful()).isTrue();
+        assertThat(response.getBody().data()).isNotEmpty();
+        assertThat(response.getBody().pagination()).isNotNull();
+        assertThat(response.getBody().pagination().size()).isEqualTo(5);
+        assertThat(response.getBody().pagination().totalElements()).isPositive();
     }
 
     @Test
@@ -94,25 +114,30 @@ class AuthAndCustomerFlowIntegrationTest extends AbstractIntegrationTest {
                                         AddressType.WORK,
                                         false)));
 
-        ResponseEntity<IdResponse> created =
-                restTemplate.postForEntity(
+        ResponseEntity<ApiResponse<IdResponse>> created =
+                restTemplate.exchange(
                         "/api/v1/customers",
+                        HttpMethod.POST,
                         new HttpEntity<>(request, bearer(token)),
-                        IdResponse.class);
+                        new ParameterizedTypeReference<>() {});
 
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(created.getBody()).isNotNull();
+        assertThat(created.getBody().successful()).isTrue();
+        assertThat(created.getBody().data().id()).isNotNull();
 
-        ResponseEntity<CustomerDetailView> detail =
+        ResponseEntity<ApiResponse<CustomerDetailView>> detail =
                 restTemplate.exchange(
-                        "/api/v1/customers/" + created.getBody().id(),
+                        "/api/v1/customers/" + created.getBody().data().id(),
                         HttpMethod.GET,
                         new HttpEntity<>(bearer(token)),
-                        CustomerDetailView.class);
+                        new ParameterizedTypeReference<>() {});
 
         assertThat(detail.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(detail.getBody()).isNotNull();
-        assertThat(detail.getBody().addresses()).hasSize(2);
-        assertThat(detail.getBody().email()).isEqualTo("e2e@test.com");
+        assertThat(detail.getBody().successful()).isTrue();
+        assertThat(detail.getBody().pagination()).isNull();
+        assertThat(detail.getBody().data().addresses()).hasSize(2);
+        assertThat(detail.getBody().data().email()).isEqualTo("e2e@test.com");
     }
 }

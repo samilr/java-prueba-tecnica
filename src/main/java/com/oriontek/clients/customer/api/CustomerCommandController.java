@@ -7,6 +7,7 @@ import com.oriontek.clients.customer.application.command.CreateCustomerHandler;
 import com.oriontek.clients.customer.application.command.DeleteCustomerCommand;
 import com.oriontek.clients.customer.application.command.DeleteCustomerHandler;
 import com.oriontek.clients.customer.application.command.UpdateCustomerHandler;
+import com.oriontek.clients.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,24 +40,25 @@ public class CustomerCommandController {
 
     @PostMapping
     @Operation(summary = "Crear un cliente con sus direcciones")
-    public ResponseEntity<IdResponse> create(@Valid @RequestBody CreateCustomerRequest request) {
+    public ResponseEntity<ApiResponse<IdResponse>> create(
+            @Valid @RequestBody CreateCustomerRequest request) {
         UUID id = createCustomerHandler.handle(customerApiMapper.toCommand(request));
         return ResponseEntity.created(URI.create("/api/v1/customers/" + id))
-                .body(new IdResponse(id));
+                .body(ApiResponse.ok(new IdResponse(id)));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar los datos de un cliente")
-    public ResponseEntity<Void> update(
+    public ApiResponse<Void> update(
             @PathVariable UUID id, @Valid @RequestBody UpdateCustomerRequest request) {
         updateCustomerHandler.handle(customerApiMapper.toCommand(id, request));
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok();
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Desactivar un cliente (soft delete)")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
         deleteCustomerHandler.handle(new DeleteCustomerCommand(id));
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok();
     }
 }

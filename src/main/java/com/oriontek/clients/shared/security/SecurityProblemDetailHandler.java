@@ -1,7 +1,8 @@
 package com.oriontek.clients.shared.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oriontek.clients.shared.web.ProblemDetails;
+import com.oriontek.clients.shared.web.ApiError;
+import com.oriontek.clients.shared.web.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -9,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -50,10 +50,10 @@ public class SecurityProblemDetailHandler implements AuthenticationEntryPoint, A
 
     private void write(HttpServletResponse response, HttpStatus status, String title, String detail)
             throws IOException {
-        ProblemDetail problem = ProblemDetails.of(status, title, detail);
         response.setStatus(status.value());
-        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        objectMapper.writeValue(response.getWriter(), problem);
+        objectMapper.writeValue(
+                response.getWriter(), ApiResponse.failure(ApiError.of(status, title, detail)));
     }
 }

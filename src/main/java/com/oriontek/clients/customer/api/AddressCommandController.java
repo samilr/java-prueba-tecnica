@@ -5,6 +5,7 @@ import com.oriontek.clients.customer.api.dto.IdResponse;
 import com.oriontek.clients.customer.application.command.AddAddressHandler;
 import com.oriontek.clients.customer.application.command.RemoveAddressHandler;
 import com.oriontek.clients.customer.application.command.UpdateAddressHandler;
+import com.oriontek.clients.shared.web.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,33 +38,32 @@ public class AddressCommandController {
 
     @PostMapping
     @Operation(summary = "Agregar una dirección al cliente")
-    public ResponseEntity<IdResponse> add(
+    public ResponseEntity<ApiResponse<IdResponse>> add(
             @PathVariable UUID customerId, @Valid @RequestBody AddressRequest request) {
         UUID id =
                 addAddressHandler.handle(
                         customerApiMapper.toAddAddressCommand(customerId, request));
         return ResponseEntity.created(
                         URI.create("/api/v1/customers/" + customerId + "/addresses/" + id))
-                .body(new IdResponse(id));
+                .body(ApiResponse.ok(new IdResponse(id)));
     }
 
     @PutMapping("/{addressId}")
     @Operation(summary = "Actualizar una dirección del cliente")
-    public ResponseEntity<Void> update(
+    public ApiResponse<Void> update(
             @PathVariable UUID customerId,
             @PathVariable UUID addressId,
             @Valid @RequestBody AddressRequest request) {
         updateAddressHandler.handle(
                 customerApiMapper.toUpdateAddressCommand(customerId, addressId, request));
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok();
     }
 
     @DeleteMapping("/{addressId}")
     @Operation(summary = "Eliminar una dirección del cliente")
-    public ResponseEntity<Void> remove(
-            @PathVariable UUID customerId, @PathVariable UUID addressId) {
+    public ApiResponse<Void> remove(@PathVariable UUID customerId, @PathVariable UUID addressId) {
         removeAddressHandler.handle(
                 customerApiMapper.toRemoveAddressCommand(customerId, addressId));
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok();
     }
 }

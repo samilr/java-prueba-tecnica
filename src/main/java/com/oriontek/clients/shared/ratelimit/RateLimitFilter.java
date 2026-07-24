@@ -1,7 +1,8 @@
 package com.oriontek.clients.shared.ratelimit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oriontek.clients.shared.web.ProblemDetails;
+import com.oriontek.clients.shared.web.ApiError;
+import com.oriontek.clients.shared.web.ApiResponse;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -18,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ProblemDetail;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -100,16 +100,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private void writeTooManyRequests(HttpServletResponse response, long retryAfterSeconds)
             throws IOException {
-        ProblemDetail problem =
-                ProblemDetails.of(
+        ApiError error =
+                ApiError.of(
                         HttpStatus.TOO_MANY_REQUESTS,
                         "Demasiadas solicitudes",
-                        "Se ha excedido el límite de solicitudes, intente más tarde");
-        problem.setProperty("retryAfterSeconds", retryAfterSeconds);
+                        "Se ha excedido el límite de solicitudes, intente nuevamente en "
+                                + retryAfterSeconds
+                                + " segundos");
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
-        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        objectMapper.writeValue(response.getWriter(), problem);
+        objectMapper.writeValue(response.getWriter(), ApiResponse.failure(error));
     }
 }

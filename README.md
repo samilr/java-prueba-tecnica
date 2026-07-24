@@ -18,6 +18,7 @@ paginación con filtros, migraciones versionadas y documentación **OpenAPI**. T
 - [Arquitectura](#arquitectura)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Credenciales demo](#credenciales-demo)
+- [Formato de respuesta](#formato-de-respuesta)
 - [Endpoints](#endpoints)
 - [Ejemplos de peticiones y respuestas](#ejemplos-de-peticiones-y-respuestas)
 - [Autenticación y roles](#autenticación-y-roles)
@@ -204,16 +205,16 @@ flowchart TD
 ```
 src/main/java/com/oriontek/clients
 ├── OrionTekApplication.java
-├── config/                          SecurityConfig, OpenApiConfig
+├── config/                          SecurityConfig, OpenApiConfig, OpenApiResponsesCustomizer
 ├── shared/
 │   ├── cqrs/                        CommandHandler, QueryHandler
 │   ├── exception/                   DomainException y sus especializaciones
-│   ├── pagination/                  PageResponse<T>
+│   ├── pagination/                  PageResponse<T>, PaginationMeta
 │   ├── ratelimit/                   RateLimitFilter, RateLimitProperties, RateLimitConfig
 │   ├── security/                    JwtService, JwtAuthenticationFilter, JpaUserDetailsService,
 │   │                                SecurityProblemDetailHandler, JwtProperties, TokenType
 │   ├── validation/                  Validador de cédula/RNC dominicano
-│   └── web/                         GlobalExceptionHandler (RFC 7807), ProblemDetails
+│   └── web/                         ApiResponse, ApiError, GlobalExceptionHandler
 ├── auth/
 │   ├── api/                         AuthController, AuthApiMapper, dto/
 │   ├── application/                 AuthService, AuthTokens
@@ -258,6 +259,60 @@ entre 1 y 4 direcciones repartidas por Santo Domingo, Santiago, La Romana y otra
 > perfil activo, de modo que el entorno sea reproducible. El perfil `demo` únicamente eleva el
 > nivel de log a `DEBUG`.
 
+## Formato de respuesta
+
+Todos los endpoints devuelven la **misma envoltura**, de modo que un cliente puede tratar
+cualquier respuesta de forma uniforme.
+
+**Éxito**
+
+```json
+{
+  "successful": true,
+  "data": { }
+}
+```
+
+**Éxito en un listado** — `data` contiene los elementos y `pagination` los metadatos:
+
+```json
+{
+  "successful": true,
+  "data": [ ],
+  "pagination": {
+    "page": 0,
+    "size": 20,
+    "totalElements": 34,
+    "totalPages": 2,
+    "first": true,
+    "last": false
+  }
+}
+```
+
+**Error**
+
+```json
+{
+  "successful": false,
+  "error": {
+    "status": 409,
+    "title": "Conflicto con el estado actual",
+    "detail": "No se puede eliminar la dirección primaria sin reasignar otra como primaria",
+    "type": "https://oriontek.com/problems/409",
+    "timestamp": "2026-07-23T22:00:00Z"
+  }
+}
+```
+
+Los campos `pagination` y `error` **se omiten** cuando no aplican, en lugar de viajar como `null`.
+En los errores de validación, `error.errors` añade el detalle campo por campo. El objeto `error`
+conserva los campos de **RFC 7807** (`status`, `title`, `detail`, `type`), de modo que no se pierde
+esa información al usar la envoltura.
+
+Como el contrato es uniforme, las operaciones de actualización y borrado responden **`200`** con
+`{"successful": true}` en lugar de un `204` sin cuerpo.
+
 ## Endpoints
 
 > Todos los endpoints se pueden explorar y ejecutar desde **Swagger UI**:
@@ -289,8 +344,8 @@ Filtros disponibles en el listado: `name`, `email`, `city` y `status`. Paginaci�
 GET /api/v1/customers?page=0&size=10&sort=name,asc&city=Santiago&status=ACTIVE
 ```
 
-La respuesta se envuelve en `PageResponse<T>`, que expone `content`, `page`, `size`,
-`totalElements`, `totalPages`, `first` y `last`.
+Los elementos viajan en `data` y los metadatos en `pagination` (`page`, `size`, `totalElements`,
+`totalPages`, `first` y `last`), según el [formato de respuesta](#formato-de-respuesta) común.
 
 ### Addresses — `/api/v1/customers/{customerId}/addresses`
 
@@ -319,12 +374,16 @@ Content-Type: application/json
 
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
-  "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
-  "tokenType": "Bearer",
-  "expiresIn": 900
+  "successful": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
+    "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
+    "tokenType": "Bearer",
+    "expiresIn": 900
+  }
 }
 ```
+
 
 ### Listado paginado de clientes
 
@@ -333,12 +392,13 @@ GET /api/v1/customers?page=0&size=2&sort=name,asc
 Authorization: Bearer <access token>
 ```
 
-**`200 OK`** — la respuesta va envuelta en `PageResponse<T>` y cada elemento incluye el número de
-direcciones asociadas.
+**`200 OK`** — los clientes van en `data`, los metadatos en `pagination`, y cada elemento incluye
+el número de direcciones asociadas.
 
 ```json
 {
-  "content": [
+  "successful": true,
+  "data": [
     {
       "id": "a0000000-0000-0000-0000-000000000006",
       "name": "Ana Cristina Reyes",
@@ -349,27 +409,19 @@ direcciones asociadas.
       "addressCount": 1,
       "createdAt": "2026-07-23T20:14:21.188920Z",
       "updatedAt": "2026-07-23T20:14:21.188920Z"
-    },
-    {
-      "id": "a0000000-0000-0000-0000-000000000007",
-      "name": "Carlos Alberto Peña",
-      "email": "carlos.pena@example.com",
-      "phone": "849-555-0107",
-      "identificationNumber": "00778901234",
-      "status": "ACTIVE",
-      "addressCount": 2,
-      "createdAt": "2026-07-23T20:14:21.188920Z",
-      "updatedAt": "2026-07-23T20:14:21.188920Z"
     }
   ],
-  "page": 0,
-  "size": 2,
-  "totalElements": 32,
-  "totalPages": 16,
-  "first": true,
-  "last": false
+  "pagination": {
+    "page": 0,
+    "size": 2,
+    "totalElements": 36,
+    "totalPages": 18,
+    "first": true,
+    "last": false
+  }
 }
 ```
+
 
 ### Detalle de un cliente
 
@@ -382,48 +434,32 @@ Authorization: Bearer <access token>
 
 ```json
 {
-  "id": "a0000000-0000-0000-0000-000000000003",
-  "name": "Pedro Antonio Martínez",
-  "email": "pedro.martinez@example.com",
-  "phone": "849-555-0103",
-  "identificationNumber": "00334567890",
-  "status": "ACTIVE",
-  "addresses": [
-    {
-      "id": "ca552aa7-9e5e-4a11-998a-d029a1845f57",
-      "street": "Av. Luperón 88",
-      "city": "Santo Domingo",
-      "state": "Distrito Nacional",
-      "country": "República Dominicana",
-      "postalCode": "10514",
-      "type": "HOME",
-      "primary": true
-    },
-    {
-      "id": "71dbbba0-29fe-49f0-a159-fcaf32e48749",
-      "street": "Calle Restauración 12",
-      "city": "La Romana",
-      "state": "La Romana",
-      "country": "República Dominicana",
-      "postalCode": "22000",
-      "type": "BILLING",
-      "primary": false
-    },
-    {
-      "id": "7d139335-de43-45d9-816f-a2e06815c5e5",
-      "street": "Calle Sánchez 7",
-      "city": "La Romana",
-      "state": "La Romana",
-      "country": "República Dominicana",
-      "postalCode": "22000",
-      "type": "OTHER",
-      "primary": false
-    }
-  ],
-  "createdAt": "2026-07-23T20:14:21.188920Z",
-  "updatedAt": "2026-07-23T20:14:21.188920Z"
+  "successful": true,
+  "data": {
+    "id": "a0000000-0000-0000-0000-000000000003",
+    "name": "Pedro Antonio Martínez",
+    "email": "pedro.martinez@example.com",
+    "phone": "849-555-0103",
+    "identificationNumber": "00334567890",
+    "status": "ACTIVE",
+    "addresses": [
+      {
+        "id": "ca552aa7-9e5e-4a11-998a-d029a1845f57",
+        "street": "Av. Luperón 88",
+        "city": "Santo Domingo",
+        "state": "Distrito Nacional",
+        "country": "República Dominicana",
+        "postalCode": "10514",
+        "type": "HOME",
+        "primary": true
+      }
+    ],
+    "createdAt": "2026-07-23T20:14:21.188920Z",
+    "updatedAt": "2026-07-23T20:14:21.188920Z"
+  }
 }
 ```
+
 
 ### Crear un cliente con sus direcciones
 
@@ -564,15 +600,32 @@ Los errores de validación incluyen el detalle campo por campo:
 
 ```json
 {
-  "type": "https://oriontek.com/problems/400",
-  "title": "Error de validación",
-  "status": 400,
-  "detail": "Uno o más campos son inválidos",
-  "timestamp": "2026-07-23T20:00:00Z",
-  "errors": [
-    { "field": "email", "message": "must be a well-formed email address" },
-    { "field": "identificationNumber", "message": "Identificación inválida: debe ser una cédula (11 dígitos) o RNC (9 dígitos) válido" }
-  ]
+  "successful": false,
+  "error": {
+    "status": 400,
+    "title": "Error de validación",
+    "detail": "Uno o más campos son inválidos",
+    "type": "https://oriontek.com/problems/400",
+    "errors": [
+      {
+        "field": "email",
+        "message": "must be a well-formed email address"
+      },
+      {
+        "field": "identificationNumber",
+        "message": "Identificación inválida: debe ser una cédula (11 dígitos) o RNC (9 dígitos) válido"
+      },
+      {
+        "field": "name",
+        "message": "size must be between 2 and 100"
+      },
+      {
+        "field": "addresses",
+        "message": "must not be empty"
+      }
+    ],
+    "timestamp": "2026-07-24T00:00:36.805815382Z"
+  }
 }
 ```
 
