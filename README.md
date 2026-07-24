@@ -540,11 +540,14 @@ Content-Type: application/json
 ```
 
 **`201 Created`** con la cabecera `Location: /api/v1/customers/{id}`. Siguiendo CQRS, el comando
-devuelve únicamente el identificador del recurso creado:
+devuelve únicamente el identificador del recurso creado, dentro de la envoltura común:
 
 ```json
 {
-  "id": "b5139974-eb24-4365-b26f-9a732b6c361d"
+  "successful": true,
+  "data": {
+    "id": "b5139974-eb24-4365-b26f-9a732b6c361d"
+  }
 }
 ```
 
@@ -569,7 +572,10 @@ Content-Type: application/json
 
 ```json
 {
-  "id": "8539c038-8237-4d5a-8a69-b006bade026f"
+  "successful": true,
+  "data": {
+    "id": "8539c038-8237-4d5a-8a69-b006bade026f"
+  }
 }
 ```
 
@@ -578,7 +584,13 @@ Si se omite `country`, se aplica por defecto `"República Dominicana"`.
 ### Actualizar y eliminar
 
 `PUT /api/v1/customers/{id}`, `PUT` y `DELETE` sobre direcciones y la baja lógica del cliente
-responden **`204 No Content`** sin cuerpo.
+responden **`200 OK`** con la envoltura sin datos:
+
+```json
+{
+  "successful": true
+}
+```
 
 ### Respuesta ante una regla de negocio
 
