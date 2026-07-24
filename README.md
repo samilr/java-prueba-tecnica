@@ -1,4 +1,4 @@
-# OrionTek Clients API
+# Tecnical Test Clients API
 
 API REST para la gestión de **clientes** y sus **direcciones**, donde cada cliente puede tener
 N direcciones (relación 1:N).
