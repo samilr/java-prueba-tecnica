@@ -331,21 +331,21 @@ Como el contrato es uniforme, las operaciones de actualización y borrado respon
 
 ### Auth — `/api/v1/auth` (públicos)
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| POST | `/login` | Devuelve access token y refresh token |
-| POST | `/register` | Crea un usuario con rol USER |
-| POST | `/refresh` | Renueva el access token a partir del refresh token |
+| Método | Ruta | Éxito | Descripción |
+|---|---|---|---|
+| POST | `/login` | `200` | Devuelve access token y refresh token |
+| POST | `/register` | `201` | Crea un usuario con rol USER y devuelve sus tokens |
+| POST | `/refresh` | `200` | Renueva el access token a partir del refresh token |
 
 ### Customers — `/api/v1/customers`
 
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| POST | `/` | ADMIN | Crear cliente junto con sus direcciones |
-| PUT | `/{id}` | ADMIN | Actualizar los datos del cliente |
-| DELETE | `/{id}` | ADMIN | Baja lógica (pasa a `INACTIVE`) |
-| GET | `/` | ADMIN, USER | Listado paginado con filtros y ordenamiento |
-| GET | `/{id}` | ADMIN, USER | Detalle con todas sus direcciones |
+| Método | Ruta | Rol | Éxito | Descripción |
+|---|---|---|---|---|
+| POST | `/` | ADMIN | `201` | Crear cliente junto con sus direcciones |
+| PUT | `/{id}` | ADMIN | `200` | Actualizar los datos del cliente |
+| DELETE | `/{id}` | ADMIN | `200` | Baja lógica (pasa a `INACTIVE`) |
+| GET | `/` | ADMIN, USER | `200` | Listado paginado con filtros y ordenamiento |
+| GET | `/{id}` | ADMIN, USER | `200` | Detalle con todas sus direcciones |
 
 Filtros disponibles en el listado: `name`, `email`, `city` y `status`. Paginación y orden con
 `page`, `size` y `sort`:
@@ -359,11 +359,11 @@ Los elementos viajan en `data` y los metadatos en `pagination` (`page`, `size`, 
 
 ### Addresses — `/api/v1/customers/{customerId}/addresses`
 
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| POST | `/` | ADMIN | Agregar una dirección al cliente |
-| PUT | `/{addressId}` | ADMIN | Actualizar una dirección |
-| DELETE | `/{addressId}` | ADMIN | Eliminar una dirección, respetando las reglas de negocio |
+| Método | Ruta | Rol | Éxito | Descripción |
+|---|---|---|---|---|
+| POST | `/` | ADMIN | `201` | Agregar una dirección al cliente |
+| PUT | `/{addressId}` | ADMIN | `200` | Actualizar una dirección |
+| DELETE | `/{addressId}` | ADMIN | `200` | Eliminar una dirección, respetando las reglas de negocio |
 
 En [`requests.http`](requests.http) hay una colección lista para ejecutar el flujo completo.
 
@@ -394,6 +394,49 @@ Content-Type: application/json
 }
 ```
 
+
+### Registro de un usuario
+
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "nuevo.usuario",
+  "email": "nuevo.usuario@oriontek.com",
+  "password": "Password123"
+}
+```
+
+**`201 Created`** — el usuario se crea siempre con rol `USER` y la respuesta ya incluye sus tokens,
+de modo que no hace falta un login posterior.
+
+```json
+{
+  "successful": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
+    "refreshToken": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ…",
+    "tokenType": "Bearer",
+    "expiresIn": 900
+  }
+}
+```
+
+Si el nombre de usuario o el email ya existen, la respuesta es **`409 Conflict`**:
+
+```json
+{
+  "successful": false,
+  "error": {
+    "status": 409,
+    "title": "Conflicto con el estado actual",
+    "detail": "El nombre de usuario ya está en uso: doc5558000",
+    "type": "https://oriontek.com/problems/409",
+    "timestamp": "2026-07-24T00:28:08.949059050Z"
+  }
+}
+```
 
 ### Listado paginado de clientes
 
