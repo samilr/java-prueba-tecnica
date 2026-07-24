@@ -32,7 +32,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-oriontek}
       DB_USERNAME: ${POSTGRES_USER:-oriontek}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-oriontek}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-this-is-a-demo-secret-key-min-256-bits-long}
+      JWT_SECRET: ${JWT_SECRET:-24a61e89554be20ad9ee8eb5cd47d79be2fb32c6821a23de1700a22c9f216489}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800}
     ports:

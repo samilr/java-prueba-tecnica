@@ -53,7 +53,7 @@ El comando levanta dos servicios:
 
 Una vez arriba, la documentación interactiva de la API queda disponible en **Swagger UI**:
 
-### 👉 <http://localhost:8080/swagger-ui.html>
+### <http://localhost:8080/swagger-ui.html>
 
 Desde ahí se pueden probar todos los endpoints: autentícate con `POST /api/v1/auth/login`, copia
 el `accessToken` de la respuesta y pégalo en el botón **Authorize**.
@@ -96,7 +96,7 @@ Levanta solo la base de datos en Docker y ejecuta la aplicación desde Maven:
 
 ```bash
 docker compose up -d postgres
-export JWT_SECRET="change-me-in-production-this-is-a-demo-secret-key-min-256-bits-long"
+export JWT_SECRET="24a61e89554be20ad9ee8eb5cd47d79be2fb32c6821a23de1700a22c9f216489"
 mvn spring-boot:run
 ```
 
@@ -110,7 +110,7 @@ Todas tienen valores por defecto para desarrollo; se documentan en `.env.example
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `oriontek` | Credenciales de la base |
 | `POSTGRES_PORT` | `5432` | Puerto de PostgreSQL en el host |
 | `SERVER_PORT` | `8080` | Puerto de la API |
-| `JWT_SECRET` | secreto de demo | Clave de firma HS256 (mínimo 256 bits) |
+| `JWT_SECRET` | clave hexadecimal de 64 caracteres | Clave de firma HMAC-SHA512 |
 | `JWT_ACCESS_EXPIRATION` | `900` | Vigencia del access token, en segundos |
 | `JWT_REFRESH_EXPIRATION` | `604800` | Vigencia del refresh token, en segundos |
 | `CORS_ALLOWED_ORIGINS` | `*` | Orígenes permitidos |
@@ -123,7 +123,7 @@ Todas tienen valores por defecto para desarrollo; se documentan en `.env.example
 | Framework | Spring Boot 3.3 (Web, Data JPA, Security, Validation, Actuator) |
 | Base de datos | PostgreSQL 16 |
 | Migraciones | Flyway (`V1__init.sql` esquema, `V2__seed.sql` datos demo) |
-| Seguridad | Spring Security + JWT (jjwt, HS256) con RBAC |
+| Seguridad | Spring Security + JWT (jjwt, HMAC-SHA512) con RBAC |
 | Documentación | springdoc-openapi (Swagger UI) |
 | Rate limiting | Bucket4j |
 | Mapeo | MapStruct |
@@ -248,6 +248,16 @@ src/test/java/com/oriontek/clients
     ├── application/query/            GetCustomerByIdHandlerTest
     └── infrastructure/persistence/   CustomerRepositoryIntegrationTest
 ```
+
+> **Clave de firma.** El repositorio incluye una clave hexadecimal de 64 caracteres para que el
+> proyecto arranque sin configuración previa. Al desplegar, genera una propia y pásala por entorno:
+>
+> ```bash
+> openssl rand -hex 32
+> ```
+>
+> Los tokens se firman con HMAC-SHA512, que requiere una clave de al menos 512 bits: los 64
+> caracteres hexadecimales cumplen ese mínimo.
 
 ## Credenciales demo
 
@@ -551,7 +561,7 @@ Authorization: Bearer <access token>
 
 ## Autenticación y roles
 
-- **Access token** de 15 minutos y **refresh token** de 7 días, firmados con **HS256** usando el
+- **Access token** de 15 minutos y **refresh token** de 7 días, firmados con **HMAC-SHA512** usando el
   secreto de la variable `JWT_SECRET`.
 - `JwtAuthenticationFilter` valida la firma, comprueba que el token sea de tipo `ACCESS` y puebla
   el `SecurityContext`.
@@ -748,7 +758,7 @@ curl -s -X POST http://localhost:8080/api/v1/customers \
 - **La dirección primaria como invariante del agregado.** La regla se aplica en `Customer` y se
   refuerza con un índice único parcial en la base de datos. Al reasignarla, la degradación de la
   anterior se persiste antes de insertar la nueva, evitando que ambas coexistan durante el *flush*.
-- **JWT propio con HS256.** Control total y sin dependencias externas para el alcance de esta
+- **JWT propio con HMAC-SHA512.** Control total y sin dependencias externas para el alcance de esta
   prueba, con el secreto siempre fuera del código.
 - **Autorización en dos niveles.** Los matchers por ruta se evalúan antes que la validación del
   cuerpo, de modo que un rol insuficiente nunca recibe pistas sobre el formato esperado.
